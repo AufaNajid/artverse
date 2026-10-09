@@ -1,0 +1,160 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { artworks, categories } from "@/data/artworks";
+import Icon from "./Icons";
+
+function ScenePreview() {
+  return <div className="scene-preview" aria-hidden="true"><div className="preview-tower" /><div className="preview-platform" /><div className="preview-cube one" /><div className="preview-cube two" /><div className="preview-art"><Image src="/artworks/art1.png" alt="" fill sizes="700px" loading="eager" unoptimized /></div><div className="preview-robot"><Image src="/artworks/compart1.png" alt="" fill sizes="200px" unoptimized /></div></div>;
+}
+
+const DreamScene = dynamic(() => import("./three/DreamScene"), { ssr: false, loading: () => <ScenePreview /> });
+const instagram = "https://www.instagram.com/woxiwaldie/";
+
+export default function Portfolio() {
+  const router = useRouter();
+  const [category, setCategory] = useState("All work");
+  const [showAll, setShowAll] = useState(false);
+  const [view, setView] = useState<"grid" | "world">("grid");
+  const [activeNav, setActiveNav] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [motionEnabled, setMotionEnabled] = useState(true);
+  const [sound, setSound] = useState(false);
+  const [character, setCharacter] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [handleStatus, setHandleStatus] = useState("");
+  const [briefStatus, setBriefStatus] = useState("");
+  const worldRef = useRef<HTMLDialogElement>(null);
+  const briefRef = useRef<HTMLDialogElement>(null);
+  const audioRef = useRef<AudioContext | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const motionChoice = useRef<boolean | null>(null);
+  const [worldOpen, setWorldOpen] = useState(false);
+  const characterArt = artworks[character === 0 ? 0 : 2];
+  const filtered = category === "All work" ? artworks.filter((art) => showAll || art.featured) : artworks.filter((art) => art.category === category);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => { if (motionChoice.current === null) setMotionEnabled(!media.matches); };
+    let navFrame = 0;
+    const updateNav = () => {
+      const threshold = window.innerHeight * 0.35;
+      let section = "home";
+      for (const id of ["home", "work", "characters", "about", "contact"]) {
+        const element = document.getElementById(id);
+        if (element && element.getBoundingClientRect().top <= threshold) section = id;
+      }
+      setActiveNav(section);
+    };
+    const scheduleNav = () => { cancelAnimationFrame(navFrame); navFrame = requestAnimationFrame(updateNav); };
+    const frame = requestAnimationFrame(() => { update(); updateNav(); });
+    media.addEventListener("change", update);
+    window.addEventListener("scroll", scheduleNav, { passive: true });
+    window.addEventListener("resize", scheduleNav);
+    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(navFrame); media.removeEventListener("change", update); window.removeEventListener("scroll", scheduleNav); window.removeEventListener("resize", scheduleNav); };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle("motion-paused", !motionEnabled);
+    return () => document.body.classList.remove("motion-paused");
+  }, [motionEnabled]);
+  useEffect(() => () => { void audioRef.current?.close(); }, []);
+
+  async function toggleSound() {
+    try {
+      if (!audioRef.current) {
+        const context = new AudioContext();
+        const master = context.createGain();
+        master.gain.value = 0;
+        master.connect(context.destination);
+        [130.81, 164.81, 196, 261.63].forEach((frequency, index) => {
+          const oscillator = context.createOscillator();
+          const voice = context.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          oscillator.detune.value = index * 3;
+          voice.gain.value = 0.2;
+          oscillator.connect(voice).connect(master);
+          oscillator.start();
+        });
+        audioRef.current = context;
+        gainRef.current = master;
+      }
+      await audioRef.current.resume();
+      gainRef.current?.gain.setTargetAtTime(sound ? 0 : 0.065, audioRef.current.currentTime, 0.4);
+      setSound(!sound);
+    } catch { setSound(false); }
+  }
+
+  function openWorld() { setWorldOpen(true); worldRef.current?.showModal(); }
+  function closeWorld() { worldRef.current?.close(); setWorldOpen(false); }
+  function selectArtwork(slug: string) { closeWorld(); router.push(`/artwork/${slug}`); }
+  async function copyHandle() {
+    try { await navigator.clipboard.writeText("@woxiwaldie"); setCopied(true); setHandleStatus("Instagram handle copied."); setTimeout(() => { setCopied(false); setHandleStatus(""); }, 2500); }
+    catch { setHandleStatus("Copy manually: @woxiwaldie"); }
+  }
+  async function prepareBrief(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const text = `Hi woxiwaldie! I’m ${data.get("name")}.\n\nI’d love to collaborate on ${data.get("type")}.\n\n${data.get("details")}\n\nReply to: ${data.get("email")}`;
+    try { await navigator.clipboard.writeText(text); setBriefStatus("Brief copied! Paste it into an Instagram message to @woxiwaldie."); }
+    catch { setBriefStatus(`Your brief is ready. Copy it below and send it on Instagram:\n\n${text}`); }
+  }
+
+  return <>
+    <a className="skip-link" href="#work">Skip to artwork</a>
+    <header className="site-header">
+      <Link className="brand" href="/" aria-label="ARTVERSE home"><span className="brand-mark"><Icon name="cube" /></span>ARTVERSE<span className="brand-dot">/ W.</span></Link>
+      <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="Main navigation">
+        {[ ["home", "Home"], ["work", "Work"], ["characters", "Characters"], ["about", "About"] ].map(([id, label]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className={activeNav === id ? "active" : ""}>{label}{activeNav === id && <span className="nav-dot" />}</a>)}
+      </nav>
+      <a className="header-contact" href="#contact">Let’s talk <Icon name="diagonal" width="15" height="15" /></a>
+      <button className="menu-toggle icon-button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"} /></button>
+    </header>
+
+    <main>
+      <section className="hero" id="home" aria-labelledby="hero-title">
+        <div className="hero-grid" />
+        <div className="hero-copy">
+          <div className="eyebrow hero-eyebrow"><span className="tiny-spark">+</span> PLAYER 01 / WOXIWALDIE</div>
+          <h1 id="hero-title">A little pixel.<br />A whole<br /><span className="heading-three">new world<span className="title-star">✦</span>.</span></h1>
+          <p>Welcome to my imagination. A playful collision<br />of pixel art, painted stories, and impossible places.</p>
+          <div className="hero-actions"><a className="button lime" href="#work">Enter the portfolio <Icon name="arrow" /></a><button className="button glass" onClick={openWorld}><Icon name="cube" /> Explore in 3D</button></div>
+          <div className="artist-note"><span className="artist-avatar"><Image src="/artworks/compart2.png" alt="" fill sizes="80px" unoptimized /></span><span><strong>Hey, I’m woxiwaldie.</strong><br />2D artist. Pixel enthusiast. World builder.</span></div>
+        </div>
+        <div className="hero-scene" aria-label="Interactive floating artwork installation"><DreamScene motionEnabled={motionEnabled} onSelectArtwork={selectArtwork} /></div>
+        <div className="scene-label"><span className="scene-indicator" /><span>WORLD 01 / PIXEL DAYDREAM</span><Icon name="cube" width="14" height="14" /></div>
+        <div className="scene-caption"><span className="caption-line" /><span className="scene-caption-title">[ TOGE TOGE ]</span><br /><span>Made of pixels. Full of personality.</span></div>
+        <div className="hero-bottom"><a href="#work" className="scroll-hint"><span className="scroll-circle"><Icon name="down" width="15" height="15" /></span>SCROLL TO GET CURIOUS</a><div className="scene-controls"><span>MAKE YOURSELF AT HOME</span><button className="icon-button" onClick={toggleSound} aria-label={sound ? "Mute ambient sound" : "Enable ambient sound"} aria-pressed={sound}><Icon name={sound ? "volume" : "mute"} width="17" height="17" /></button><button className="icon-button" onClick={() => { motionChoice.current = !motionEnabled; setMotionEnabled(!motionEnabled); }} aria-label={motionEnabled ? "Pause animations" : "Play animations"} aria-pressed={!motionEnabled}><Icon name={motionEnabled ? "pause" : "play"} width="16" height="16" /></button></div></div>
+      </section>
+      <div className="discipline-strip" aria-label="Creative disciplines"><span>CHARACTER DESIGN</span><span className="strip-star">✳</span><span>PIXEL ART</span><span className="strip-star">✳</span><span>VISUAL STORYTELLING</span><span className="strip-star">✳</span><span>A LITTLE BIT OF MAGIC</span><span className="strip-star">✳</span></div>
+
+      <section className="work-section page-section" id="work" aria-labelledby="work-title">
+        <div className="section-top"><div><div className="eyebrow section-eyebrow"><span className="section-number">01 /</span> SELECTED WORK</div><h2 id="work-title">Small details. <span className="serif-word">Big ideas.</span></h2></div><button className="text-link all-work" onClick={() => { setShowAll(!showAll); setCategory("All work"); setView("grid"); }}>{showAll ? "Selected work" : "View all work"} <span className="count-badge">{showAll ? "03" : "04"}</span><Icon name="diagonal" width="16" height="16" /></button></div>
+        <div className="work-toolbar"><div className="category-tabs" aria-label="Filter artwork"><button onClick={() => setCategory("All work")} aria-pressed={category === "All work"} className={category === "All work" ? "selected" : ""}>All work <span>{showAll ? "04" : "03"}</span></button>{categories.map((item) => <button key={item} onClick={() => setCategory(item)} aria-pressed={category === item} className={category === item ? "selected" : ""}>{item}</button>)}</div><div className="view-switch" aria-label="Gallery view"><button className={view === "grid" ? "selected" : ""} aria-label="Grid view" aria-pressed={view === "grid"} onClick={() => setView("grid")}><Icon name="grid" width="16" height="16" /></button><button className={view === "world" ? "selected" : ""} aria-label="3D world view" aria-pressed={view === "world"} onClick={() => setView("world")}><Icon name="cube" width="16" height="16" /></button></div></div>
+        {view === "world" && <div className="gallery-world"><DreamScene interactive motionEnabled={motionEnabled} focusArtwork={filtered[0]?.slug} onSelectArtwork={selectArtwork} /><div className="world-hint"><Icon name="cube" /> Drag to orbit · Scroll to zoom · Click artwork to discover its story</div></div>}
+        <div className={`artwork-grid ${view === "world" ? "compact" : ""}`} aria-live="polite">{filtered.map((art, index) => <Link href={`/artwork/${art.slug}`} className={`art-card art-card-${art.slug}`} key={art.slug}><div className="art-card-image" style={{ backgroundColor: art.color }}><Image src={art.coverImage} alt={art.alt} fill sizes="(max-width: 640px) 94vw, (max-width: 1000px) 46vw, 31vw" unoptimized={art.category === "Pixel art"} /><span className="art-index">{String(index + 1).padStart(2, "0")}</span><span className="art-open"><Icon name="diagonal" /></span><span className="art-type">{art.tags[0]}</span></div><div className="art-card-info"><div><h3>{art.title}</h3><p>{art.category} <span>·</span> Original artwork</p></div>{art.year && <span className="art-year">{art.year}</span>}</div></Link>)}</div>
+        <div className="gallery-footnote"><span className="green-dot" /> Pixels, paintings, and peculiar little ideas.<span className="sample-note">ALL WORK BY WOXIWALDIE ↗</span></div>
+      </section>
+
+      <section className="character-section page-section" id="characters" aria-labelledby="character-title">
+        <div className="character-art" onPointerMove={(event) => { if (!motionEnabled) return; const rect = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty("--pointer-x", `${(event.clientX - rect.left - rect.width / 2) / 38}deg`); event.currentTarget.style.setProperty("--pointer-y", `${-(event.clientY - rect.top - rect.height / 2) / 38}deg`); }} onPointerLeave={(event) => { event.currentTarget.style.setProperty("--pointer-x", "0deg"); event.currentTarget.style.setProperty("--pointer-y", "0deg"); }}><div className="character-image"><Image src={characterArt.coverImage} alt={characterArt.alt} fill sizes="(max-width: 760px) 90vw, 45vw" unoptimized={characterArt.category === "Pixel art"} /><span className="character-image-label">CHARACTER FILE / {character === 0 ? "001" : "002"}</span></div><span className="character-floating-tag"><Icon name="spark" width="14" height="14" /> EVERY CHARACTER HAS A STORY</span></div>
+        <div className="character-copy"><div className="eyebrow"><span className="section-number">02 /</span> MEET THE CHARACTERS</div><h2 id="character-title">More than pixels.<br />A little <span className="serif-word">personality.</span></h2><p>A cobalt blue adventurer. A friendly little screen.<br />Every character starts with a spark, and ends up with a world of their own.</p><div className="character-selector" aria-label="Choose a character">{[artworks[0], artworks[2]].map((art, i) => <button key={art.slug} aria-pressed={character === i} onClick={() => setCharacter(i)} className={character === i ? "selected" : ""}><span className="selector-thumb"><Image src={art.coverImage} alt="" fill sizes="46px" unoptimized /></span><span>{art.title}<small>{i === 0 ? "Electric blue. Limitless energy." : "Your friendly digital companion."}</small></span><Icon name="arrow" width="16" height="16" /></button>)}</div><Link className="text-link" href={`/artwork/${characterArt.slug}`}>Discover this character <Icon name="diagonal" width="16" height="16" /></Link></div>
+      </section>
+
+      <section className="about-section page-section" id="about" aria-labelledby="about-title"><div className="about-title-block"><div className="eyebrow"><span className="section-number">03 /</span> BEHIND THE PIXELS</div><h2 id="about-title">Hi, I’m <span className="serif-word">woxiwaldie.</span><br />Curiosity is my superpower.</h2><div className="about-doodle" aria-hidden="true"><Image src="/artworks/compart2.png" alt="" width={140} height={140} unoptimized /><span>always imagining.</span></div></div><div className="about-description"><p>I’m a 2D artist who loves expressive characters, playful pixels, and the little details that make imaginary worlds feel alive.</p><p>ARTVERSE is my space between the digital and the hand-drawn. From electric blue pixel adventures to warm, painterly portraits — there’s always another story to explore.</p><div className="skill-tags"><span>Pixel art</span><span>Character design</span><span>Digital painting</span><span>Visual storytelling</span></div><a className="text-link" href={instagram} target="_blank" rel="noopener noreferrer">More from my sketchbook <Icon name="instagram" width="17" height="17" /></a></div></section>
+
+      <section className="contact-section" id="contact" aria-labelledby="contact-title"><div className="contact-orbit" aria-hidden="true" /><div className="eyebrow"><span className="green-dot" /> OPEN TO NEW POSSIBILITIES</div><h2 id="contact-title">Have a world in mind?<br />Let’s <span className="serif-word">dream it up.</span></h2><p>For collaborations, commissions, or just a friendly hello.</p><div className="contact-actions"><a className="button lime" href={instagram} target="_blank" rel="noopener noreferrer">Let’s talk on Instagram <Icon name="diagonal" width="18" height="18" /></a><button className="button dark-outline" onClick={() => { setBriefStatus(""); briefRef.current?.showModal(); }}>Prepare a project brief <Icon name="arrow" width="18" height="18" /></button></div><button className="copy-handle" onClick={copyHandle}><Icon name="instagram" width="15" height="15" /> {copied ? "Handle copied!" : "@woxiwaldie"}<Icon name="copy" width="13" height="13" /></button><span className="handle-status" role="status">{handleStatus}</span></section>
+    </main>
+
+    <footer className="site-footer"><Link className="brand" href="/"><span className="brand-mark"><Icon name="cube" /></span>ARTVERSE</Link><p>Little pixels. Infinite worlds.</p><span>© 2026 woxiwaldie</span><a href="#home" className="text-link">Back to the top <Icon name="diagonal" width="14" height="14" /></a></footer>
+
+    <dialog className="world-dialog" ref={worldRef} aria-labelledby="world-dialog-title" onCancel={() => setWorldOpen(false)} onClose={() => setWorldOpen(false)}><div className="world-dialog-header"><div><span className="eyebrow">YOU’VE ENTERED THE ARTVERSE</span><h2 id="world-dialog-title">Follow your curiosity.</h2></div><button autoFocus className="icon-button" aria-label="Close 3D world" onClick={closeWorld}><Icon name="close" /></button></div><div className="world-dialog-scene">{worldOpen && <DreamScene interactive motionEnabled={motionEnabled} onSelectArtwork={selectArtwork} />}</div><div className="world-dialog-footer"><span><Icon name="cube" /> Drag to orbit. Scroll to zoom. Click an artwork.</span><button className="text-link" onClick={() => { closeWorld(); document.getElementById("work")?.scrollIntoView({ behavior: motionEnabled ? "smooth" : "instant" }); }}>Browse the gallery <Icon name="arrow" width="18" height="18" /></button></div><div className="world-art-links">{artworks.filter((art) => art.featured).map((art) => <Link key={art.slug} href={`/artwork/${art.slug}`} onClick={closeWorld}>{art.title}<Icon name="diagonal" width="14" height="14" /></Link>)}</div></dialog>
+    <dialog ref={briefRef} className="brief-dialog" aria-labelledby="brief-dialog-title"><div className="brief-header"><span className="eyebrow">LET’S MAKE SOMETHING</span><button className="icon-button" aria-label="Close project brief" onClick={() => briefRef.current?.close()}><Icon name="close" /></button></div><h2 id="brief-dialog-title">A little idea.<br />A new beginning.</h2><p>Put your idea into words, then copy your brief and send it to me on Instagram.</p><form onSubmit={prepareBrief}><label>Your name<input name="name" required maxLength={100} placeholder="How should I call you?" autoComplete="name" /></label><label>Your email<input type="email" name="email" required maxLength={200} placeholder="you@example.com" autoComplete="email" /></label><label>What are we imagining?<select name="type"><option>Pixel art</option><option>Character design</option><option>Illustration</option><option>A creative collaboration</option></select></label><label>A few details<textarea name="details" required minLength={10} maxLength={5000} placeholder="Tell me about the project, timeline, and budget…" rows={4} /></label><button type="submit" className="button lime">Copy project brief <Icon name="copy" width="17" height="17" /></button></form><p className="brief-status" role="status">{briefStatus}</p><a href={instagram} target="_blank" rel="noopener noreferrer" className="text-link">Open Instagram <Icon name="diagonal" width="15" height="15" /></a></dialog>
+  </>;
+}
+

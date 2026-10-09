@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ARTVERSE — woxiwaldie
 
-## Getting Started
+A pixel-art portfolio for woxiwaldie, built with Next.js, React, Three.js, and React Three Fiber. The cyan floating world presents original character artwork alongside a filterable gallery, artwork detail pages, and an Instagram contact flow.
 
-First, run the development server:
+## Run locally
 
-```bash
+```sh
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sh
+npm run lint
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`start` serves the production build after `build` succeeds.
 
-## Learn More
+## Update the portfolio
 
-To learn more about Next.js, take a look at the following resources:
+- Edit titles, descriptions, categories, gallery entries, and image dimensions in `data/artworks.ts`.
+- Update the Instagram URL and artist copy in `components/Portfolio.tsx`.
+- Original files `art1.png`, `art2.jpg`, `compart1.png`, and `compart2.png` are intact in `public/artworks/`, including PNG transparency. See `docs/artwork-prompts.md` for provenance.
+- Set optional `NEXT_PUBLIC_SITE_URL` to the public site origin for production metadata.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The 3D scene uses original sprite textures with shallow instanced voxel extrusion. It provides a 2.5D presentation of the artwork; the characters are not fully modeled or rigged. Visitors can orbit and zoom, select artworks, and view images fullscreen. The site supports mobile layouts, reduced motion, and a static fallback when WebGL is unavailable.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The brief composer copies a draft to the visitor’s clipboard so they can send it on Instagram. There is no email backend or automatic message transmission.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Earlier generated demo assets remain in `public/artworks/` for provenance and are not used by the current portfolio. No deployment has been performed. See `docs/implementation.md` for implementation notes.
