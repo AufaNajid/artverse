@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Pixelify_Sans, Silkscreen, JetBrains_Mono } from "next/font/google";
 import "./tailwind.css";
 import "./globals.css";
 
@@ -18,6 +18,9 @@ const pixel = Pixelify_Sans({
   subsets: ["latin"],
   display: "swap",
 });
+
+const exhibit = Silkscreen({ variable: "--font-exhibit", subsets: ["latin"], weight: ["400", "700"], display: "swap" });
+const exhibitMono = JetBrains_Mono({ variable: "--font-exhibit-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -38,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${pixel.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${pixel.variable} ${exhibit.variable} ${exhibitMono.variable} h-full antialiased`}
     >
       <body>{children}</body>
     </html>

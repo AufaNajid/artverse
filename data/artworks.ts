@@ -8,6 +8,7 @@ export type Artwork = {
   category: ArtworkCategory;
   description: string;
   coverImage: string;
+  frameImage: string;
   alt: string;
   width: number;
   height: number;
@@ -27,6 +28,7 @@ export const artworks: Artwork[] = [
     category: "Pixel art",
     description: "Cobalt blue, a fearless grin, and a pose with somewhere to be. A pixel character full of motion and little details.",
     coverImage: "/artworks/art1.png",
+    frameImage: "/artworks/frames/toge-toge.webp",
     alt: "Pixel art of a smiling white-haired character in a cobalt blue outfit, jumping while holding a futuristic mint-colored blaster.",
     width: 1536,
     height: 1536,
@@ -43,6 +45,7 @@ export const artworks: Artwork[] = [
     category: "Illustrations",
     description: "A quiet close-up told through warm brushwork, olive eyes, and a few strands of hair. Small details, all the feeling.",
     coverImage: "/artworks/art2.jpg",
+    frameImage: "/artworks/frames/portrait-study.webp",
     alt: "A painted close-up of olive-colored eyes beneath dark brows and loose hair, with warm amber skin tones and facial piercings.",
     width: 1920,
     height: 1080,
@@ -59,6 +62,7 @@ export const artworks: Artwork[] = [
     category: "Pixel art",
     description: "Meet a mint-colored companion with a screen for a face and stars in its eyes. Pocket-sized pixels, maximum personality.",
     coverImage: "/artworks/compart1.png",
+    frameImage: "/artworks/frames/digital-companion.webp",
     alt: "A mint and teal pixel creature shaped like a little screen, with starry eyes, a smiling face, rounded hands, and tiny feet.",
     width: 366,
     height: 378,
@@ -75,6 +79,7 @@ export const artworks: Artwork[] = [
     category: "Characters",
     description: "Tousled dark hair, warm eyes, and an expressive little gesture. A character portrait with visible brushwork and plenty of personality.",
     coverImage: "/artworks/compart2.png",
+    frameImage: "/artworks/frames/character-sketch.webp",
     alt: "A digital character bust on a transparent background, with tousled dark blue hair, warm brown eyes, facial piercings, a pale jacket, and raised hands.",
     width: 2000,
     height: 2000,
