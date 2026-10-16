@@ -1,0 +1,15 @@
+# Upload the application, not local credentials or generated files.
+.env*
+.git
+.next
+node_modules
+.vercel
+.codex
+.agents
+docs
+tests
+scripts/prepare-production.mjs
+scripts/configure-vercel.mjs
+scripts/deployment-readiness.mjs
+*.log
+*.tsbuildinfo

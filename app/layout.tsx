@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Pixelify_Sans, Silkscreen, JetBrains_Mono } from "next/font/google";
 import "./tailwind.css";
 import "./globals.css";
+import { getSiteUrl } from "@/data/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,14 +24,13 @@ const exhibit = Silkscreen({ variable: "--font-exhibit", subsets: ["latin"], wei
 const exhibitMono = JetBrains_Mono({ variable: "--font-exhibit-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: { default: "ARTVERSE — The world of woxiwaldie", template: "%s · ARTVERSE" },
-  description: "A little pixel. A whole new world. Explore woxiwaldie's original pixel art, character illustrations, and interactive 3D dreamscape.",
-  authors: [{ name: "woxiwaldie" }],
+  metadataBase: new URL(getSiteUrl()),
+  title: { default: "ARTVERSE — Original art, infinite worlds", template: "%s · ARTVERSE" },
+  description: "Original pixel art, painted stories, and a floating 3D exhibition.",
   openGraph: {
-    title: "ARTVERSE — The world of woxiwaldie",
-    description: "Original pixel art and painted stories inside a playful cyan 3D world.",
-    images: [{ url: "/artworks/art2.jpg", width: 1920, height: 1080 }],
+    title: "ARTVERSE — Original art, infinite worlds",
+    description: "Original pixel art, painted stories, and a floating 3D exhibition.",
+    images: [{ url: "/3d/opengraph-image", width: 1200, height: 630 }],
     type: "website",
   },
   twitter: { card: "summary_large_image" },

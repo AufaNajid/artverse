@@ -31,6 +31,13 @@
 .artwork-intro-note { display: flex; align-items: center; gap: 16px; font-family: var(--font-pixel, monospace); font-size: 12px; font-weight: 700; line-height: 1.5; background: #ceff69; border: 2px solid var(--artwork-ink); box-shadow: 4px 4px 0 #103252; padding: 14px 20px; transform: rotate(-3deg); }
 .artwork-intro-note svg { color: #ed248b; width: 30px; height: 30px; flex-shrink: 0; }
 .artwork-feature { margin: 0; }
+.artwork-gallery { margin-top: 60px; }
+.artwork-gallery > h2 { font-family: var(--font-pixel, monospace); font-size: 34px; color: #2054e9; }
+.artwork-gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 36px 28px; }
+.artwork-gallery-grid figure { margin: 0; }
+.artwork-gallery-grid button { display: block; position: relative; padding: 0; width: 100%; aspect-ratio: 4/3; border: 2px solid var(--artwork-ink); background: #d7f3f5; box-shadow: 5px 5px 0 #66d8e0; }
+.artwork-gallery-grid img { object-fit: contain; }
+.artwork-gallery-grid figcaption { margin-top: 14px; font-size: 11px; line-height: 1.6; color: var(--artwork-muted); }
 .artwork-image-button { position: relative; display: block; width: 100%; aspect-ratio: 1; border: 2px solid var(--artwork-ink); border-radius: 0; overflow: hidden; padding: 0; margin-inline: auto; background-image: repeating-conic-gradient(#10325208 0% 25%, transparent 0% 50%); background-size: 28px 28px; box-shadow: 8px 8px 0 #66d8e0; }
 .artwork-feature-image { object-fit: contain; transition: transform .65s ease; }
 .artwork-pixels { image-rendering: pixelated; }

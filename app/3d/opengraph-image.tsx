@@ -1,16 +1,9 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { getPublishedArtworks, getPublicProfile } from "@/lib/cms/public";
 
-export const alt = "ARTVERSE / 3D — A gallery without walls. Original art by woxiwaldie in a floating aqua world.";
+export const alt = "ARTVERSE / 3D — A gallery without walls. Original art in a floating aqua world.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-// Module-scope reads keep this metadata image independent of request data.
-const [characterData, companionData] = await Promise.all([
-  readFile(join(process.cwd(), "public", "artworks", "art1.png"), "base64"),
-  readFile(join(process.cwd(), "public", "artworks", "compart1.png"), "base64"),
-]);
 
 const glyphs: Record<string, string[]> = {
   A: ["01110", "11011", "11011", "11111", "11011", "11011", "11011"],
@@ -33,7 +26,8 @@ function PixelTitle({ text, scale, color }: { text: string; scale: number; color
   );
 }
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const [profile, artworks] = await Promise.all([getPublicProfile(), getPublishedArtworks()]);
   return new ImageResponse(
     <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", overflow: "hidden", background: "linear-gradient(140deg, #e9f8fb 5%, #d8f2f5 48%, #b8e6ee 100%)", color: "#153b55", fontFamily: "sans-serif" }}>
       <div style={{ position: "absolute", top: 24, left: 24, right: 24, bottom: 24, border: "1px solid #ffffff", display: "flex" }} />
@@ -75,16 +69,13 @@ export default function OpenGraphImage() {
       <div style={{ position: "absolute", left: 68, top: 274, display: "flex" }}><PixelTitle text="/ 3D" scale={10} color="#2f4ff0" /></div>
       <div style={{ position: "absolute", left: 68, top: 384, display: "flex", fontSize: 30 }}>A gallery without walls.</div>
       <div style={{ position: "absolute", left: 68, top: 435, display: "flex", fontSize: 17, color: "#426980" }}>Original pixels. Painted stories. A world to explore.</div>
-      <div style={{ position: "absolute", left: 68, bottom: 65, display: "flex", alignItems: "center", borderTop: "1px solid #87b8ca", paddingTop: 18, width: 422, fontSize: 14, letterSpacing: 2 }}>BY WOXIWALDIE<span style={{ marginLeft: "auto", color: "#2f4ff0" }}>DRAG · DISCOVER</span></div>
+      <div style={{ position: "absolute", left: 68, bottom: 65, display: "flex", alignItems: "center", borderTop: "1px solid #87b8ca", paddingTop: 18, width: 422, fontSize: 14, letterSpacing: 2 }}>BY {profile.name.toUpperCase()}<span style={{ marginLeft: "auto", color: "#2f4ff0" }}>DRAG · DISCOVER</span></div>
 
       <div style={{ position: "absolute", left: 761, top: 238, display: "flex", width: 234, height: 244, padding: 11, backgroundColor: "#2f4ff0", transform: "rotate(8deg)", boxShadow: "9px 9px 0 rgba(47,79,240,0.18)" }}>
-        {/* ImageResponse requires an img element for embedded local artwork. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`data:image/png;base64,${characterData}`} alt="" width={212} height={222} style={{ objectFit: "contain", backgroundColor: "#d6f7f7" }} />
+        <div style={{ width: 212, height: 222, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "#d6f7f7", padding: 18, textAlign: "center" }}><svg width="70" height="70" viewBox="0 0 70 70"><path d="M35 1C39 23 47 31 69 35C47 39 39 47 35 69C31 47 23 39 1 35C23 31 31 23 35 1Z" fill="#2f4ff0" /></svg><span style={{ fontSize: 18 }}>{artworks[0]?.title || "A new world"}</span></div>
       </div>
       <div style={{ position: "absolute", left: 603, top: 397, display: "flex", width: 165, height: 176, padding: 8, backgroundColor: "#2f4ff0", transform: "rotate(-8deg)", boxShadow: "7px 7px 0 rgba(47,79,240,0.18)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`data:image/png;base64,${companionData}`} alt="" width={149} height={160} style={{ objectFit: "contain", backgroundColor: "#eff8cc" }} />
+        <div style={{ width: 149, height: 160, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "#eff8cc", padding: 12, textAlign: "center" }}><svg width="50" height="50" viewBox="0 0 50 50"><path d="M25 3L47 25L25 47L3 25Z" fill="none" stroke="#82bf4d" strokeWidth="3" /></svg><span style={{ fontSize: 14 }}>{artworks[1]?.title || "Little possibilities"}</span></div>
       </div>
     </div>,
     size,

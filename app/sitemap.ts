@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
-import { artworks } from "@/data/artworks";
+import { getPublishedArtworks } from "@/lib/cms/public";
+import { getSiteUrl } from "@/data/site-url";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const artworks = await getPublishedArtworks();
+  const base = getSiteUrl();
   return [
     { url: base, changeFrequency: "monthly", priority: 1 },
     { url: `${base}/3d`, changeFrequency: "monthly", priority: 0.9 },

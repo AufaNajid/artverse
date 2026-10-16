@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model PortfolioProfile {
+  id         String   @id @default("singleton")
+  authId     String   @unique @db.Uuid
+  name       String
+  bio        String   @default("")
+  avatarPath String?
+  instagram  String   @default("")
+  email      String?
+  updatedAt  DateTime @updatedAt
+}
+
+model Artwork {
+  id          String         @id @default(uuid()) @db.Uuid
+  slug        String         @unique
+  title       String
+  category    String
+  description String         @default("")
+  coverPath   String?
+  framePath   String?
+  alt         String         @default("")
+  width       Int?
+  height      Int?
+  tools       String[]       @default([])
+  year        Int?
+  featured    Boolean        @default(false)
+  color       String         @default("#b6f2ed")
+  tags        String[]       @default([])
+  brief       String         @default("")
+  approach    String         @default("")
+  status      String         @default("draft")
+  sortOrder   Int            @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  images      ArtworkImage[]
+  mediaAssets MediaAsset[]
+
+  @@index([status, sortOrder])
+  @@index([coverPath])
+  @@index([framePath])
+}
+
+model ArtworkImage {
+  id          String  @id @default(uuid()) @db.Uuid
+  artworkId   String  @db.Uuid
+  artwork     Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  storagePath String
+  alt         String  @default("")
+  sortOrder   Int     @default(0)
+
+  @@index([artworkId, sortOrder])
+  @@index([storagePath])
+}
+
+model MediaAsset {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerId     String   @db.Uuid
+  artworkId   String?  @db.Uuid
+  artwork     Artwork? @relation(fields: [artworkId], references: [id], onDelete: SetNull)
+  storagePath String   @unique
+  framePath   String?  @unique
+  mime        String
+  width       Int
+  height      Int
+  sizeBytes   Int
+  purpose     String
+  validated   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([artworkId])
+  @@index([ownerId])
+}
+
+model StorageCleanup {
+  id           String    @id @default(uuid()) @db.Uuid
+  ownerId      String    @db.Uuid
+  storagePaths String[]
+  attempts     Int       @default(0)
+  createdAt    DateTime  @default(now())
+  attemptedAt  DateTime?
+  notBefore    DateTime  @default(now())
+
+  @@index([ownerId, notBefore])
+}
+
+model CmsRateLimit {
+  key     String   @id
+  count   Int      @default(1)
+  resetAt DateTime
+}

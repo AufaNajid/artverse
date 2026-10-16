@@ -1,6 +1,8 @@
 # ARTVERSE — woxiwaldie
 
-A pixel-art portfolio for woxiwaldie, built with Next.js, React, Three.js, and React Three Fiber. Original character artwork, a filterable gallery, artwork detail pages, and an Instagram contact flow sit alongside a floating 3D exhibition of blue frames, cyan glass stairs, and colorful crystals.
+Live portfolio: [woxiwaldie-portfolio.vercel.app](https://woxiwaldie-portfolio.vercel.app). Share this address with visitors. See `docs/deployment.md` for deployment and verification details.
+
+A pixel-art portfolio for woxiwaldie, built with Next.js, React, Three.js, and React Three Fiber. A private owner studio adds Supabase Auth, PostgreSQL through Prisma, validated image uploads, draft/publish controls, and profile editing while preserving the public portfolio and 3D exhibition.
 
 ## Run locally
 
@@ -9,21 +11,24 @@ npm install
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000).
+Use Node.js 24. Open [localhost:3000](http://localhost:3000), [owner sign-in](http://localhost:3000/login), or the [setup guide](http://localhost:3000/setup). With no CMS connection configured, the public site shows the original four works and sign-in explains the required setup. It does not provide a mock owner session.
 
 ```sh
 npm run lint
+npm run test:cms
 npm run build
 npm run start
 ```
 
 `start` serves the production build after `build` succeeds.
 
-## Update the portfolio
+## Connect and update the portfolio
 
-- Edit titles, descriptions, categories, gallery entries, and image dimensions in `data/artworks.ts`.
-- Keep `coverImage` pointed at the original artwork and `frameImage` pointed at a WebP exhibition texture with dimensions no larger than 1024 pixels.
-- Update the Instagram URL and artist copy in `components/Portfolio.tsx`.
+- Follow `docs/cms-setup.md` to create the Supabase owner, configure `.env`, apply the migration, seed the existing artwork, and install private Storage policies.
+- Run `npm run db:generate`, `npm run db:migrate`, and `npm run db:seed` during installation. The seed preserves later edits and deletions on repeat runs.
+- Use `/dashboard` to create drafts, upload covers/gallery images, arrange artwork and images, publish, and edit the artist profile. See `docs/owner-guide.md`.
+- Connected public pages read only published database records at request time. New content does not require source edits or another build.
+- `data/artworks.ts` and `data/profile.ts` remain bootstrap/connection-free preview data, rather than the connected site's content source.
 - Original files `art1.png`, `art2.jpg`, `compart1.png`, and `compart2.png` are intact in `public/artworks/`, including PNG transparency. See `docs/artwork-prompts.md` for provenance.
 - Set optional `NEXT_PUBLIC_SITE_URL` to the public site origin for production metadata.
 
@@ -35,6 +40,6 @@ All supplied originals are intact. The exhibition uses optimized WebP derivative
 
 The brief composer copies a draft to the visitor’s clipboard so they can send it on Instagram. There is no email backend or automatic message transmission.
 
-Earlier generated demo assets remain in `public/artworks/` for provenance and are not used by the current portfolio. No deployment has been performed. See `docs/implementation.md` for implementation notes.
+Earlier generated demo assets remain in `public/artworks/` for provenance and are not used by the current portfolio. See `docs/implementation.md` for implementation notes.
 
-Production build, TypeScript, and ESLint pass. Browser checks cover the rendered WebGL gallery, desktop/mobile layouts, frame focus, orbit and wheel zoom, previews, deep links, sharing, filtering, and return navigation. Physical-device pinch input, device FPS, and 4G loading performance have not been benchmarked.
+CMS validation, API authorization, build, and browser verification are recorded in `docs/cms-verification.md`. Actual Supabase account login, database mutations, Storage policies, and publication must be tested after project setup; no cloud credentials or deployment have been supplied. Physical-device pinch input, device FPS, and 4G performance remain unbenchmarked.

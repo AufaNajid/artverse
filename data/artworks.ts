@@ -1,8 +1,9 @@
 export const categories = ["Pixel art", "Characters", "Illustrations"] as const;
 
-export type ArtworkCategory = (typeof categories)[number];
+export type ArtworkCategory = string;
 
 export type Artwork = {
+  id?: string;
   slug: string;
   title: string;
   category: ArtworkCategory;
@@ -19,6 +20,16 @@ export type Artwork = {
   tags: string[];
   brief: string;
   approach: string;
+  galleryImages?: ArtworkImage[];
+};
+
+export type ArtworkImage = {
+  id: string;
+  url: string;
+  frameUrl?: string;
+  alt: string;
+  width?: number;
+  height?: number;
 };
 
 export const artworks: Artwork[] = [

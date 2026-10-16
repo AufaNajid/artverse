@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { artworks } from "@/data/artworks";
+import type { Artwork } from "@/data/artworks";
 import ExploreWorld from "./ExploreWorld";
 
-export default function ExploreRoute() {
+export default function ExploreRoute({ artworks }: { artworks: Artwork[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const values = params.getAll("karya");

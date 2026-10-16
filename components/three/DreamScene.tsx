@@ -4,22 +4,28 @@ import { Component, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useSt
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Edges, Environment, Float, Lightformer, OrbitControls, RoundedBox, useTexture } from "@react-three/drei";
 import { Color, DoubleSide, MathUtils, NearestFilter, Object3D, SRGBColorSpace, type Group, type InstancedMesh, type Points } from "three";
+import type { Artwork } from "@/data/artworks";
 import "./DreamScene.css";
 
 export type DreamSceneProps = {
+  artworks: Artwork[];
   interactive?: boolean;
   motionEnabled?: boolean;
   focusArtwork?: string;
   onSelectArtwork?: (slug: string) => void;
 };
 
-const originals = {
-  "toge-toge": { path: "/artworks/art1.png", title: "Toge Toge", pixel: true, depth: true },
-  "digital-companion": { path: "/artworks/compart1.png", title: "Digital Companion", pixel: true, depth: true },
-  "portrait-study": { path: "/artworks/art2.jpg", title: "Portrait Study", pixel: false, depth: false },
-  "character-sketch": { path: "/artworks/compart2.png", title: "Character Sketch", pixel: false, depth: false },
-};
-type ArtworkSlug = keyof typeof originals;
+type SceneArtwork = { slug: string; path: string; title: string; pixel: boolean; depth: boolean; width: number; height: number };
+
+function sceneArtwork(artwork: Artwork): SceneArtwork {
+  return { slug: artwork.slug, path: artwork.frameImage, title: artwork.title, pixel: artwork.category === "Pixel art", depth: artwork.category === "Pixel art", width: artwork.width, height: artwork.height };
+}
+
+function pickArtwork(artworks: Artwork[], focusArtwork?: string) {
+  const main = artworks.find((artwork) => artwork.slug === focusArtwork) || artworks.find((artwork) => artwork.featured && artwork.category === "Pixel art") || artworks[0];
+  const buddy = artworks.find((artwork) => artwork.slug !== main?.slug && artwork.category === "Pixel art") || artworks.find((artwork) => artwork.slug !== main?.slug);
+  return { main: main ? sceneArtwork(main) : null, buddy: buddy ? sceneArtwork(buddy) : null };
+}
 
 class RenderBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -27,26 +33,24 @@ class RenderBoundary extends Component<{ children: ReactNode; fallback: ReactNod
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-function StaticWorld({ focusArtwork, onSelectArtwork }: Pick<DreamSceneProps, "focusArtwork" | "onSelectArtwork">) {
-  const slug = focusArtwork && focusArtwork in originals ? focusArtwork as ArtworkSlug : "toge-toge";
-  const buddySlug = slug === "digital-companion" ? "toge-toge" : "digital-companion";
+function StaticWorld({ artworks, focusArtwork, onSelectArtwork }: Pick<DreamSceneProps, "artworks" | "focusArtwork" | "onSelectArtwork">) {
+  const { main, buddy } = pickArtwork(artworks, focusArtwork);
   return (
     <div className="dream-fallback" aria-label="A floating pixel world built around original character art">
       <div className="dream-glass dream-glass-one" /><div className="dream-glass dream-glass-two" />
       <div className="dream-glass dream-glass-three" /><div className="dream-glass dream-glass-four" />
       <div className="dream-lime-shard" /><div className="dream-pink-shard" />
-      <button className="dream-sprite dream-sprite-main" style={{ backgroundImage: `url(${originals[slug].path})`, imageRendering: originals[slug].pixel ? "pixelated" : "auto" }} aria-label={`Explore ${originals[slug].title}`} onClick={() => onSelectArtwork?.(slug)} />
-      <button className="dream-sprite dream-sprite-buddy" style={{ backgroundImage: `url(${originals[buddySlug].path})` }} aria-label={`Explore ${originals[buddySlug].title}`} onClick={() => onSelectArtwork?.(buddySlug)} />
+      {main && <button className="dream-sprite dream-sprite-main" style={{ backgroundImage: `url(${main.path})`, imageRendering: main.pixel ? "pixelated" : "auto" }} aria-label={`Explore ${main.title}`} onClick={() => onSelectArtwork?.(main.slug)} />}
+      {buddy && <button className="dream-sprite dream-sprite-buddy" style={{ backgroundImage: `url(${buddy.path})`, imageRendering: buddy.pixel ? "pixelated" : "auto" }} aria-label={`Explore ${buddy.title}`} onClick={() => onSelectArtwork?.(buddy.slug)} />}
     </div>
   );
 }
 
 /** The original alpha is sampled into shallow voxel columns. The unaltered
  * image forms their crisp front face; orbiting exposes the artwork's depth. */
-function PixelSprite({ slug, height, simplified, motion, onSelectArtwork }: {
-  slug: ArtworkSlug; height: number; simplified: boolean; motion: boolean; onSelectArtwork?: (slug: string) => void;
+function PixelSprite({ artwork, height, simplified, motion, onSelectArtwork }: {
+  artwork: SceneArtwork; height: number; simplified: boolean; motion: boolean; onSelectArtwork?: (slug: string) => void;
 }) {
-  const artwork = originals[slug];
   const source = useTexture(artwork.path);
   const texture = useMemo(() => {
     const copy = source.clone();
@@ -108,7 +112,7 @@ function PixelSprite({ slug, height, simplified, motion, onSelectArtwork }: {
 
   const click = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    if (event.delta < 7) onSelectArtwork?.(slug);
+    if (event.delta < 7) onSelectArtwork?.(artwork.slug);
   };
 
   return (
@@ -262,12 +266,12 @@ function Stardust({ motion, simplified }: { motion: boolean; simplified: boolean
   </points>;
 }
 
-function PixelWorld({ interactive, motion, simplified, scroll, focusArtwork, onSelectArtwork }: {
-  interactive: boolean; motion: boolean; simplified: boolean; scroll: { current: number }; focusArtwork?: string; onSelectArtwork?: (slug: string) => void;
+function PixelWorld({ artworks, interactive, motion, simplified, scroll, focusArtwork, onSelectArtwork }: {
+  artworks: Artwork[]; interactive: boolean; motion: boolean; simplified: boolean; scroll: { current: number }; focusArtwork?: string; onSelectArtwork?: (slug: string) => void;
 }) {
   const world = useRef<Group>(null);
   const character = useRef<Group>(null);
-  const slug = focusArtwork && focusArtwork in originals ? focusArtwork as ArtworkSlug : "toge-toge";
+  const { main, buddy } = pickArtwork(artworks, focusArtwork);
   useFrame((state, delta) => {
     if (!motion || !world.current) return;
     world.current.rotation.y = MathUtils.damp(world.current.rotation.y, -0.08 + (interactive ? 0 : state.pointer.x * 0.07) + scroll.current * 0.035, 3, delta);
@@ -291,15 +295,15 @@ function PixelWorld({ interactive, motion, simplified, scroll, focusArtwork, onS
       <VoxelArchitecture motion={motion} simplified={simplified} />
       <FloatingShards motion={motion} simplified={simplified} />
       <group ref={character} position={[0.3, -0.16, 1]} rotation={[0, -0.06, -0.035]}>
-        <RenderBoundary key={slug} fallback={null}><Suspense fallback={null}>
-          <PixelSprite slug={slug} height={slug === "digital-companion" ? 3.55 : slug === "portrait-study" ? 3.4 : 5.75} simplified={simplified} motion={motion} onSelectArtwork={onSelectArtwork} />
-        </Suspense></RenderBoundary>
+        {main && <RenderBoundary key={main.path} fallback={null}><Suspense fallback={null}>
+          <PixelSprite artwork={main} height={main.slug === "digital-companion" ? 3.55 : Math.min(5.75, 6 / (main.width / main.height))} simplified={simplified} motion={motion} onSelectArtwork={onSelectArtwork} />
+        </Suspense></RenderBoundary>}
       </group>
       <Float speed={motion ? 1.3 : 0} floatIntensity={motion ? 0.22 : 0} rotationIntensity={motion ? 0.10 : 0}>
         <group position={[-1.72, 1.84, 1.22]} rotation={[0, 0.15, 0.07]}>
-          <RenderBoundary fallback={null}><Suspense fallback={null}>
-            <PixelSprite slug={slug === "digital-companion" ? "toge-toge" : "digital-companion"} height={1.42} simplified={simplified} motion={motion} onSelectArtwork={onSelectArtwork} />
-          </Suspense></RenderBoundary>
+          {buddy && <RenderBoundary key={buddy.path} fallback={null}><Suspense fallback={null}>
+            <PixelSprite artwork={buddy} height={1.42} simplified={simplified} motion={motion} onSelectArtwork={onSelectArtwork} />
+          </Suspense></RenderBoundary>}
         </group>
       </Float>
       <Stardust motion={motion} simplified={simplified} />
@@ -308,7 +312,7 @@ function PixelWorld({ interactive, motion, simplified, scroll, focusArtwork, onS
   </>;
 }
 
-export default function DreamScene({ interactive = false, motionEnabled = true, focusArtwork, onSelectArtwork }: DreamSceneProps) {
+export default function DreamScene({ artworks, interactive = false, motionEnabled = true, focusArtwork, onSelectArtwork }: DreamSceneProps) {
   const container = useRef<HTMLDivElement>(null);
   const scroll = useRef(0);
   const [supported, setSupported] = useState<boolean | null>(null);
@@ -334,14 +338,14 @@ export default function DreamScene({ interactive = false, motionEnabled = true, 
     if (container.current) observer.observe(container.current);
     return () => { cancelAnimationFrame(initialFrame); motionQuery.removeEventListener("change", updatePreferences); sizeQuery.removeEventListener("change", updatePreferences); window.removeEventListener("scroll", updateScroll); observer.disconnect(); };
   }, []);
-  const fallback = <StaticWorld focusArtwork={focusArtwork} onSelectArtwork={onSelectArtwork} />;
+  const fallback = <StaticWorld artworks={artworks} focusArtwork={focusArtwork} onSelectArtwork={onSelectArtwork} />;
   const motion = motionEnabled && !reducedMotion && inView;
   return <div ref={container} className="dream-scene" style={{ position: "relative", width: "100%", height: "100%", minHeight: 360 }}>
     {supported ? <RenderBoundary fallback={fallback}>
       <Canvas camera={{ position: [0, 0, 10.5], fov: 43, near: 0.1, far: 50 }} dpr={simplified ? 1 : [1, 1.5]} frameloop={motion ? "always" : "demand"} gl={{ alpha: true, antialias: !simplified, powerPreference: "low-power" }} fallback={fallback}
         onCreated={({ gl }) => { gl.setClearColor(0x000000, 0); gl.domElement.addEventListener("webglcontextlost", (event) => { event.preventDefault(); setSupported(false); }, { once: true }); }}
         role="img" aria-label="An interactive cyan glass voxel world with original pixel characters and floating neon shards">
-        <PixelWorld interactive={interactive} motion={motion} simplified={simplified} scroll={scroll} focusArtwork={focusArtwork} onSelectArtwork={onSelectArtwork} />
+        <PixelWorld artworks={artworks} interactive={interactive} motion={motion} simplified={simplified} scroll={scroll} focusArtwork={focusArtwork} onSelectArtwork={onSelectArtwork} />
       </Canvas>
     </RenderBoundary> : fallback}
   </div>;

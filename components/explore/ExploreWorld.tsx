@@ -183,7 +183,7 @@ export default function ExploreWorld({
 
     <dialog ref={previewRef} className="explorer-preview" aria-labelledby={previewTitleId} onCancel={(event) => { event.preventDefault(); closePreview(); }} onClose={() => { setPreviewOpen(false); setZoomed(false); }}>
       <div className="explorer-preview-toolbar"><div><span className="explorer-label">EVERY DETAIL COUNTS</span><h2 id={previewTitleId}>{selected?.title}</h2></div><div><button onClick={() => setZoomed(!zoomed)} aria-pressed={zoomed}>{zoomed ? "− Fit to screen" : "+ Zoom in"}</button><button autoFocus onClick={closePreview} aria-label="Close full artwork">Close <Icon name="close" width="17" height="17" /></button></div></div>
-      <div className="explorer-preview-scroll">{selected && <div className={`explorer-preview-image ${zoomed ? "is-zoomed" : ""}`}><Image src={selected.coverImage} alt={selected.alt} fill sizes={zoomed ? "180vw" : "100vw"} unoptimized style={{ imageRendering: selected.category === "Pixel art" ? "pixelated" : "auto" }} /></div>}</div>
+      <div className="explorer-preview-scroll">{previewOpen && selected && <div className={`explorer-preview-image ${zoomed ? "is-zoomed" : ""}`}><Image src={selected.coverImage} alt={selected.alt} fill sizes={zoomed ? "180vw" : "100vw"} unoptimized style={{ imageRendering: selected.category === "Pixel art" ? "pixelated" : "auto" }} /></div>}</div>
     </dialog>
   </div>;
 }

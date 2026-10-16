@@ -4,7 +4,7 @@ ARTVERSE presents woxiwaldie’s supplied artwork in a cyan floating world with 
 
 ## Artwork and content
 
-`data/artworks.ts` defines titles, categories, descriptions, dimensions, gallery metadata, and detail-page text. The current artwork sources are `public/artworks/art1.png`, `art2.jpg`, `compart1.png`, and `compart2.png`. `coverImage` references these full originals; `frameImage` references optimized WebP derivatives for the exhibition.
+The connected portfolio reads published PostgreSQL records through `lib/cms/public.ts`; data is requested at runtime behind Suspense boundaries. `data/artworks.ts` and `data/profile.ts` supply the one-time seed and the explicit preview when no CMS configuration exists. Partial configuration and database failures never silently return preview content. The initial artwork sources remain `public/artworks/art1.png`, `art2.jpg`, `compart1.png`, and `compart2.png`. `coverImage` references full originals; `frameImage` references optimized WebP derivatives.
 
 These files are exact copies of the supplied originals. They were not resized, re-encoded, repainted, or cleaned up. All original PNG alpha channels remain intact. `compart2.png` contains transparent margins rather than a baked white background. Dimensions, alpha bounds, hashes, and source paths are recorded in `docs/artwork-prompts.md`.
 
@@ -32,7 +32,17 @@ Left/Right keys select the previous/next artwork. Escape closes the image previe
 
 `components/Portfolio.tsx` provides the landing page, gallery filters, artist section, and contact controls. Artwork routes under `app/artwork/[slug]/` show the original artwork, supporting text, and image fullscreen controls. Layouts adapt to smaller screens, and reduced-motion styles also apply to the interface.
 
-To change the public Instagram destination, edit the Instagram URL in `components/Portfolio.tsx`. Gallery labels and titles live in `data/artworks.ts`.
+The owner updates artwork, gallery order, and profile information through the dashboard. The public UI receives published artwork and profile props, including empty-collection handling. The hero, 3D gallery, metadata, and sitemap do not resurrect unpublished seed records. Ordered process/gallery images use lightweight previews and open full originals on demand.
+
+## Owner CMS and storage
+
+The private studio uses verified Supabase `getUser()` identity and a configured owner UUID. No public registration is provided. Cookie-authenticated mutations require matching Origin/Host and reject cross-site requests. Login/upload throttles persist in PostgreSQL. Zod validates metadata; publication requires a title, fixed category, cover and alt text. A slug locks after its first publication, including after unpublishing.
+
+The Prisma migration defines artwork, image, profile, tracked media, cleanup queue, and rate-limit tables. Database constraints reinforce publication requirements; row-level policies deny direct anonymous/authenticated Data API access. A separate runtime role has only CMS table permissions. Private Storage policies expose only published references and the public avatar; owner paths remain private otherwise.
+
+Signed direct uploads support JPEG/PNG/WebP up to 10 MB and 15 referenced images including the cover. Uploaded bytes are decoded and checked before validation; 1024-pixel WebP derivatives feed public previews and 3D frames. This avoids Vercel's function payload limit. Stable `/api/media/[id]` URLs authorize each request, then redirect to a short-lived signed Storage URL. Protected media cannot enter the public Next image cache. Links already issued remain valid for 60 seconds; legacy local files remain public as documented in `docs/cms-setup.md`.
+
+Artwork changes and deletions use database transactions; failed object deletion remains queued for owner-authorized retry. Dashboard Maintenance retries queued cleanup and expires unused uploads. Owner installation, usage, backup, and access recovery are documented in `docs/cms-setup.md` and `docs/owner-guide.md`.
 
 ## Contact behavior
 
@@ -44,14 +54,15 @@ The project-brief composer formats the visitor’s input as a draft and copies i
 npm install
 npm run dev
 npm run lint
+npm run test:cms
 npm run build
 npm run start
 ```
 
 The development server is available at `http://localhost:3000`. Run `build` before `start`.
 
-Optional `NEXT_PUBLIC_SITE_URL` supplies the public origin for production metadata. Configure it for the eventual hosting URL before a production build. No deployment has been performed.
+Optional `NEXT_PUBLIC_SITE_URL` supplies an explicit public origin for production metadata. Without it, Vercel's production domain is used automatically. The live site is https://woxiwaldie-portfolio.vercel.app; deployment details are in `docs/deployment.md`.
 
 ## Verification limits
 
-Production build, TypeScript, and ESLint pass. Browser checks verified WebGL rendering, artwork focus and camera transitions, drag orbit, wheel zoom without page scrolling, desktop/mobile/landscape HUD layouts, and navigation between the exhibition and portfolio. Physical-device pinch input, device FPS targets, and 4G loading measurements remain unbenchmarked. See `docs/exhibition.md` for the full verification record.
+Earlier exhibition browser checks are recorded in `docs/exhibition.md`. Current CMS verification and remaining Supabase activation steps are recorded in `docs/cms-verification.md`. Physical-device pinch input, device FPS targets, and 4G loading measurements remain unbenchmarked.
